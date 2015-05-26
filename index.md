@@ -1,7 +1,7 @@
 ---
 layout: page
-title: Hello World!
-tagline: Supporting tagline
+title: Nicolas Del Piano
+tagline: Blog
 ---
 {% include JB/setup %}
 
