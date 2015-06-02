@@ -140,12 +140,12 @@ Once we have that, two cases show up:
 
 1. If there aren't uncovered elements: the element is full matched, so it's only needed to analyse the patterns on the right. 
 
-2. If there are uncovered elements: for each uncovered element `e`, we add the case `(Cons e ucs)`, being `ucs` the tail of the uncovered cases from the first argument, and appending these with the recursive call. But, the trick here is to add on the head of each case obtained from the recurse call, the element on the head of the second argument. Here's why:
+2. If there are uncovered elements: for each uncovered element `e`, we add the case `(Cons e ucs)`, being `ucs` the tail of the uncovered cases from the first argument, and appending these with the recursive call. But, the trick here is to add on the head of each case obtained from the recursive call, the element on the head of the second argument.
 
 As an example, consider this definition
 
 ```
-crazy Zero (Succ NullBinder) (Succ $ Succ Zero)
+crazy Zero (Succ NullBinder) (Succ $ Succ Zero) = Zero
 ```
 
 We start with nothing uncovered, that is, `Cons NullBinder (Cons NullBinder (Cons NullBinder Nil))`. Let's analyse what happens in each case separately:
@@ -156,36 +156,45 @@ We start with nothing uncovered, that is, `Cons NullBinder (Cons NullBinder (Con
 
 3. `miss NullBinder (Succ $ Succ Zero) = [Zero, Succ Zero, Succ $ Succ $ Succ NullBinder]`
 
-So, first uncovered case for the first position in the pattern is `Succ NullBinder`. As this is not matched yet, we have to add the uncovered case `Cons (Succ NullBinder) (Cons NullBinder (Cons NullBinder Nil))`. The middle unmatched element on the clause is `Zero`, and check what patterns are missing for this case: `Cons Zero (Cons Zero (Cons NullBinder Nil))` and `Cons (Succ NullBinder) (Cons Zero (Cons NullBinder Nil))`. The last case has a bigger uncovered set, so, again, for each uncovered case we generate: `Cons Zero (Cons (Succ NullBinder) (Cons **Zero** Nil))`, `Cons Zero (Cons (Succ NullBinder) (Cons **(Succ Zero)** Nil))` and `Cons Zero (Cons (Succ NullBinder) (Cons **(Succ $ Succ $ Succ NullBinder)** Nil))`
+So, first uncovered case for the first position in the pattern is `Succ NullBinder`. As this is not matched yet, we have to add the uncovered case `Cons (Succ NullBinder) (Cons NullBinder (Cons NullBinder Nil))`. The middle unmatched element on the clause is `Zero`, and check what patterns are missing for this case: `Cons Zero (Cons Zero (Cons NullBinder Nil))` and `Cons (Succ NullBinder) (Cons Zero (Cons NullBinder Nil))`. The last case has a bigger uncovered set, so, again, for each uncovered case we generate: `Cons Zero (Cons (Succ NullBinder) (Cons Zero Nil))`, `Cons Zero (Cons (Succ NullBinder) (Cons (Succ Zero) Nil))` and `Cons Zero (Cons (Succ NullBinder) (Cons (Succ $ Succ $ Succ NullBinder) Nil))`
 
 All in all, the algorithm I follow could be viewed as:
 
 ```
-**At step i:**
+At step i:
 
 If u(xi) is non-empty: (u(xi) is `missed` between `xi` an its corresponding element on the uncovered case)
 
-Vector x: our clause
-Vector y: an uncovered case
+Vector x: our clause (x1 ... xn) (this is the second argument on the function missed)
+Vector y: an uncovered case (y1 ... yn)
 
-x1 ...x(i-1) u(xi) yj y(j+1) ... ym
- \________/
+x1 ...x(i-1) xi x(i+1) ... xn
+ \___________/
  bind (fixed)
 
-For each element in u(xi) 
+For each element in u(y(i+1) ... yn) = [(y(i+1)_1 ... y(i+1)_m), ..., (yn_1, ..., yn_m)]
 we create all possible permutations:
 
-x1 ... x(i-1) uxi_1 yj y(j+1) ... ym
-x1 ... x(i-1) uxi_2 yj y(j+1) ... ym
+x1 ... x(i-1) xi y(i+1)_1 ... yn_1
+x1 ... x(i-1) xi y(i+1)_2 ... yn_2
  ...
-x1 ... x(i-1) uxi_m yj y(j+1) ... ym
+x1 ... x(i-1) xi y(i+1)_m ... yn_m
+
+And also, for u(xi), we add t
+
+m1_1 ... uxi_1 y(i+1) ... yn
+...
+m1_k ... uxi_k y(i+1) ... yn
 
 If u(xi) is empty:
 
+m1_1 ... xi y(i+1) ... yn
+...
+m1_k ... xi y(i+1) ... yn
 
 ```
 
-This might be better explained, so don't hesitate to leave me a comment! Anyway, the code is at [Code] (https://github.com/nicodelpiano/stlcnat-exhaustivity-checker)
+If something wasn't clear enough, don't hesitate to leave me a comment! Anyway, the code is at [Code] (https://github.com/nicodelpiano/stlcnat-exhaustivity-checker)
 
 Suggestions, ideas and critics are very welcome!
 
