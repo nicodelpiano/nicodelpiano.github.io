@@ -51,7 +51,7 @@ data Binder = NullBinder       -- Wildcard binder
 
 ```
 
-The first attempt I did was to represent clauses as lists of binders, and full definitions as a list of clauses. Though I solved the problem for the `Binder` datatype and that representation, it wasn't a clever solution.
+The first attempt I did was to represent clauses as lists of binders, and full definitions as lists of clauses. Though I solved the problem for the `Binder` datatype and that representation, it wasn't a clever solution.
 
 Therefore, Phil suggested in using this more clever representation:
 
@@ -108,7 +108,11 @@ f xn1 ... xnn
 #### Plans for next week
 
 What I am going to do this week:
+
   * Support other kind of patterns
+
   * Make this a suitable Cabal Project
+
   * Analyse how to extend for `(,)`, `Either`, and so on.
+
   * Write more test cases and properties for Vec (choose which is the correct implementation)
