@@ -15,6 +15,8 @@ So, let's begin.
 
 #### Exhaustivity Checking
 
+(This is *better* explained in my previous post)
+
 When writing pattern matching definitions, it's important to cover the whole set of type's constructors. For instance, if we are working with lists:
 
 ```
@@ -34,7 +36,7 @@ is not exhaustive, since the case `Nil` is missing.
 
 #### How do we tackle this issue?
 
-There are a few approachs for solving this problem. The one we are following is explained in the following paper [1] (research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf) (GHC is implementing this solution now, but I guess it's not in the official version) although we are trying to **generalise** the idea and provide a library that could be used to solve the problem for any datatype.
+There are a few approachs for solving this problem. The one we are following is explained in this great paper [1] (research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf) (GHC is implementing this solution now, but I guess it's not in the official version) although we are trying to **generalise** the idea and provide a library that could be used to solve the problem for any datatype.
 
 #### STDL + Nats
 
@@ -90,9 +92,15 @@ You can see a more complex example:
 [Zero,Succ Zero,Succ (Succ (Succ NullBinder))]
 ```
 
+#### Tidying up things a bit more
 
 
+
+
+#### Plans for next week
 
 What I am going to do this week:
-  * Analyse how to extend `(,)`, `Either`, and so on.
-  * Write more test cases and properties for Vec
+  * Support other kind of patterns
+  * Make this a suitable Cabal Project
+  * Analyse how to extend for `(,)`, `Either`, and so on.
+  * Write more test cases and properties for Vec (choose which is the correct implementation)
