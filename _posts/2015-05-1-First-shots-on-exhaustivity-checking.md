@@ -34,6 +34,57 @@ is not exhaustive, since the case `Nil` is missing.
 
 #### How do we tackle this issue?
 
-There are a few approachs for solving this problem. The one we are following is explained in the following paper [1] (GHC is implementing it now, but I guess it's not in the official version) although we are trying to **generalise** the idea to solve the problem for any datatype.
+There are a few approachs for solving this problem. The one we are following is explained in the following paper [1] (research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf) (GHC is implementing this solution now, but I guess it's not in the official version) although we are trying to **generalise** the idea and provide a library that could be used to solve the problem for any datatype.
 
-#### 
+#### STDL + Nats
+
+To begin with, we define a small language to work with Nats and wildcards: the latter represent all values.
+
+```
+-- | Name binding association
+data Binder = NullBinder       -- Wildcard binder
+            | Zero             -- Zero binder
+            | Succ Binder      -- Nat binder
+  deriving (Show, Eq)
+
+```
+
+The first attempt I did was to represent clauses as lists of binders, and full definitions as a list of clauses. Though I solved the problem for the `Binder` datatype and that representation, it wasn't a clever solution.
+
+Therefore, Phil suggested in using this more clever representation:
+
+```
+class Match c where
+  full :: c
+  missed :: c -> c -> [c]
+
+```
+
+So, we can instantiate `Match` for the `Binder` datatype and define `missed` as we did previously.
+
+And this is what we get:
+
+```
+instance Match Binder where
+  missed _ NullBinder = []
+
+  missed NullBinder b = go b
+    where
+    go Zero = [Succ NullBinder]
+    go (Succ n) = Zero : map Succ (go n)
+    go _ = []
+
+  missed Zero Zero = []
+  missed (Succ n) (Succ m) = map Succ (missed n m)
+
+  missed b _ = [b]
+```
+
+What should `missed` do? Well, it takes two elements of type `c` and returns a list of all uncovered cases that were not matched between the elements. The first argument is the *case to match*, and the second is the *case we have*.
+For example, in the case of `Binder`, we have three constructors. So if we try to match `NullBinder` (which represents all cases) with `Zero`, we have to split `NullBinder` into two cases: `Zero` and `Succ NullBinder`. Since we have `Zero`, the only case we don't match is `Succ NullBinder`, so this is what `missed` should return.
+
+
+
+What I am going to do this week:
+  * Analyse how to 
+  *
