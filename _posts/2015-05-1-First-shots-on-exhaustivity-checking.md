@@ -7,7 +7,7 @@ tags: [PureScript, Haskell, Exhaustivity, Checking]
 ---
 {% include JB/setup %}
 ### GSOC: Week 1
-Well, the past week was my first week working on the GSOC project. Although I have started a bit late, I think we obtained interesting results.
+Well, the past week was my first week working on the GSOC project. Although I've started a bit late, I think we obtained interesting results.
 
 This post is about what I've been doing and understanding when trying to apply the exhaustivity checking problem to a simple typed lambda calculus + Nats language.
 
@@ -81,10 +81,18 @@ instance Match Binder where
 ```
 
 What should `missed` do? Well, it takes two elements of type `c` and returns a list of all uncovered cases that were not matched between the elements. The first argument is the *case to match*, and the second is the *case we have*.
-For example, in the case of `Binder`, we have three constructors. So if we try to match `NullBinder` (which represents all cases) with `Zero`, we have to split `NullBinder` into two cases: `Zero` and `Succ NullBinder`. Since we have `Zero`, the only case we don't match is `Succ NullBinder`, so this is what `missed` should return.
+For example, in the case of `Binder`, we have three constructors. So if we try to match `NullBinder` (which represents all cases) with `Zero`, we have to split `NullBinder` into two cases: `Zero` and `Succ NullBinder`. Since we have `Zero`, the only case we don't match is `Succ NullBinder`. Then, `missed NullBinder Zero` returns `[Succ NullBinder]`.
+
+You can see a more complex example:
+
+```
+*Types> missed NullBinder (Succ $ Succ Zero)
+[Zero,Succ Zero,Succ (Succ (Succ NullBinder))]
+```
+
 
 
 
 What I am going to do this week:
-  * Analyse how to 
-  *
+  * Analyse how to extend `(,)`, `Either`, and so on.
+  * Write more test cases and properties for Vec
