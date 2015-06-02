@@ -7,7 +7,7 @@ tags: [PureScript, Haskell, Exhaustivity, Checking]
 ---
 {% include JB/setup %}
 ### GSOC: Week 1
-Well, the past week was my first week working on the GSOC project. Although I've started a bit late, I think we obtained interesting results.
+Well, past week was my first week working on the GSOC project. Although I've started a bit late, I think we obtained interesting results.
 
 This post is about what I've been doing and understanding when trying to apply the exhaustivity checking problem to a simple typed lambda calculus + Nats language.
 
@@ -102,10 +102,96 @@ f x11 ... x1n
 f xn1 ... xnn
 ```
 
+The invariant that we have to assure is that the uncovered cases that we generate should have n-arity, in order to be valid cases. For that reason, we define a `Vec` GADT:
+
+```
+data Nat = Z | S Nat
+
+data Vec n a where
+  Nil :: Vec Z a
+  Cons :: a -> Vec n a -> Vec (S n) a
+```
+
+then, if we define an `Match` instance for `Vec`
+
+```
+instance (Match c) => Match (Vec n c)
+```
+
+we have proven that the generated list contains uncovered cases that match the length of the arguments given! This is awesome!
+(Thanks Phil!)
+
+#### Match instance for Vec and some QuickChecking
+
+This is the instance I defined:
+
+```
+instance (Match c) => Match (Vec n c) where
+  missed Nil _ = []
+  missed (Cons x xs) (Cons y ys) | null miss = map (Cons x) (missed xs ys)
+                                 | otherwise = map (`Cons` xs) miss ++ map (Cons y) (missed xs ys)
+    where
+    miss = missed x y
+```
+
+Basically, the idea is to take each element of the second argument and `miss` them with each corresponding element of the first argument, obtaining the list of uncovered elements of type `c`.
+
+Once we have that, two cases show up:
+
+1. If there aren't uncovered elements: the element is full matched, so it's only needed to analyse the patterns on the right. 
+
+2. If there are uncovered elements: for each uncovered element `e`, we add the case `(Cons e ucs)`, being `ucs` the tail of the uncovered cases from the first argument, and appending these with the recursive call. But, the trick here is to add on the head of each case obtained from the recurse call, the element on the head of the second argument. Here's why:
+
+As an example, consider this definition
+
+```
+crazy Zero (Succ NullBinder) (Succ $ Succ Zero)
+```
+
+We start with nothing uncovered, that is, `Cons NullBinder (Cons NullBinder (Cons NullBinder Nil))`. Let's analyse what happens in each case separately:
+
+1. `miss NullBinder Zero = [Succ NullBinder]`
+
+2. `miss NullBinder (Succ NullBinder) = [Zero]`
+
+3. `miss NullBinder (Succ $ Succ Zero) = [Zero, Succ Zero, Succ $ Succ $ Succ NullBinder]`
+
+So, first uncovered case for the first position in the pattern is `Succ NullBinder`. As this is not matched yet, we have to add the uncovered case `Cons (Succ NullBinder) (Cons NullBinder (Cons NullBinder Nil))`. The middle unmatched element on the clause is `Zero`, and check what patterns are missing for this case: `Cons Zero (Cons Zero (Cons NullBinder Nil))` and `Cons (Succ NullBinder) (Cons Zero (Cons NullBinder Nil))`. The last case has a bigger uncovered set, so, again, for each uncovered case we generate: `Cons Zero (Cons (Succ NullBinder) (Cons **Zero** Nil))`, `Cons Zero (Cons (Succ NullBinder) (Cons **(Succ Zero)** Nil))` and `Cons Zero (Cons (Succ NullBinder) (Cons **(Succ $ Succ $ Succ NullBinder)** Nil))`
+
+All in all, the algorithm I follow could be viewed as:
+
+```
+**At step i:**
+
+If u(xi) is non-empty: (u(xi) is `missed` between `xi` an its corresponding element on the uncovered case)
+
+Vector x: our clause
+Vector y: an uncovered case
+
+x1 ...x(i-1) u(xi) yj y(j+1) ... ym
+ \________/
+ bind (fixed)
+
+For each element in u(xi) 
+we create all possible permutations:
+
+x1 ... x(i-1) uxi_1 yj y(j+1) ... ym
+x1 ... x(i-1) uxi_2 yj y(j+1) ... ym
+ ...
+x1 ... x(i-1) uxi_m yj y(j+1) ... ym
+
+If u(xi) is empty:
 
 
+```
 
-#### Plans for next week
+This might be better explained, so don't hesitate to leave me a comment! Anyway, the code is at [Code] (https://github.com/nicodelpiano/stlcnat-exhaustivity-checker)
+
+Suggestions, ideas and critics are very welcome!
+
+Thanks!
+
+#### Plans for the upcoming week
 
 What I am going to do this week:
 
