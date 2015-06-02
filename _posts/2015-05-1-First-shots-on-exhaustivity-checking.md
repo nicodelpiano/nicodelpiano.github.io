@@ -94,6 +94,14 @@ You can see a more complex example:
 
 #### Tidying up things a bit more
 
+This is a general pattern matching definition:
+
+```
+f x11 ... x1n
+...
+f xn1 ... xnn
+```
+
 
 
 
