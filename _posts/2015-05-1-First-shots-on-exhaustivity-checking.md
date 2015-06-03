@@ -121,7 +121,7 @@ instance (Match c) => Match (Vec n c)
 we have proven that the generated list contains uncovered cases that match the length of the arguments given! This is awesome!
 (Thanks Phil!)
 
-#### Match instance for Vec and some QuickChecking
+#### Match instance for Vec 
 
 This is the instance I defined:
 
@@ -150,20 +150,29 @@ crazy Zero (Succ NullBinder) (Succ $ Succ Zero) = Zero
 
 We start with nothing uncovered, that is, `Cons NullBinder (Cons NullBinder (Cons NullBinder Nil))`. Let's analyse what happens in each case separately:
 
-1. `miss NullBinder Zero = [Succ NullBinder]`
+1. `missed NullBinder Zero = [Succ NullBinder]`
 
-2. `miss NullBinder (Succ NullBinder) = [Zero]`
+2. `missed NullBinder (Succ NullBinder) = [Zero]`
 
-3. `miss NullBinder (Succ $ Succ Zero) = [Zero, Succ Zero, Succ $ Succ $ Succ NullBinder]`
+3. `missed NullBinder (Succ $ Succ Zero) = [Zero, Succ Zero, Succ $ Succ $ Succ NullBinder]`
 
-So, first uncovered case for the first position in the pattern is `Succ NullBinder`. As this is not matched yet, we have to add the uncovered case `Cons (Succ NullBinder) (Cons NullBinder (Cons NullBinder Nil))`. The middle unmatched element on the clause is `Zero`, and check what patterns are missing for this case: `Cons Zero (Cons Zero (Cons NullBinder Nil))` and `Cons (Succ NullBinder) (Cons Zero (Cons NullBinder Nil))`. The last case has a bigger uncovered set, so, again, for each uncovered case we generate: `Cons Zero (Cons (Succ NullBinder) (Cons Zero Nil))`, `Cons Zero (Cons (Succ NullBinder) (Cons (Succ Zero) Nil))` and `Cons Zero (Cons (Succ NullBinder) (Cons (Succ $ Succ $ Succ NullBinder) Nil))`
+```
 
-All in all, the algorithm I follow could be viewed as:
+ghci> missed (Cons NullBinder (Cons NullBinder (Cons NullBinder Nil))) (Cons Zero (Cons (Succ NullBinder) (Cons (Succ $ Succ Zero) Nil)))
+
+[(Cons Succ NullBinder (Cons NullBinder (Cons NullBinder Nil))),(Cons Zero (Cons Zero (Cons NullBinder Nil))),(Cons Zero (Cons Succ NullBinder (Cons Zero Nil))),(Cons Zero (Cons Succ NullBinder (Cons Succ Zero Nil))),(Cons Zero (Cons Succ NullBinder (Cons Succ (Succ (Succ NullBinder)) Nil)))]
+
+```
+
+So, first uncovered case for the first position in the pattern is `Succ NullBinder`. As this is not matched yet, we have to add the uncovered case `Cons (Succ NullBinder) (Cons NullBinder (Cons NullBinder Nil))`. The middle unmatched element on the clause is `Zero`, and check what patterns are missing for this case: `Cons Zero (Cons Zero (Cons NullBinder Nil))`. The last case of the clause has a bigger uncovered set, so, again, for each uncovered case we generate: `Cons Zero (Cons (Succ NullBinder) (Cons Zero Nil))`, `Cons Zero (Cons (Succ NullBinder) (Cons (Succ Zero) Nil))` and `Cons Zero (Cons (Succ NullBinder) (Cons (Succ $ Succ $ Succ NullBinder) Nil))`
+
+All in all, the algorithm I've followed could be viewed as:
 
 ```
 At step i:
+----------
 
-If u(xi) is non-empty: (u(xi) is `missed` between `xi` an its corresponding element on the uncovered case)
+* If u(xi) is non-empty: (u(xi) is `missed` between `xi` an its corresponding element on the uncovered case)
 
 Vector x: our clause (x1 ... xn) (this is the second argument on the function missed)
 Vector y: an uncovered case (y1 ... yn)
@@ -180,17 +189,17 @@ x1 ... x(i-1) xi y(i+1)_2 ... yn_2
  ...
 x1 ... x(i-1) xi y(i+1)_m ... yn_m
 
-And also, for u(xi), we add t
+And also, for u(xi), we add the following cases:
 
-m1_1 ... uxi_1 y(i+1) ... yn
+... uxi_1 y(i+1) ... yn
 ...
-m1_k ... uxi_k y(i+1) ... yn
+... uxi_k y(i+1) ... yn
 
-If u(xi) is empty:
+* If u(xi) is empty:
 
-m1_1 ... xi y(i+1) ... yn
+... xi y(i+1) ... yn
 ...
-m1_k ... xi y(i+1) ... yn
+... xi y(i+1) ... yn
 
 ```
 
