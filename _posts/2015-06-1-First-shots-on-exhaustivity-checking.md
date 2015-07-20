@@ -15,8 +15,6 @@ So, let's begin.
 
 #### Exhaustivity Checking
 
-(This is *better* explained in my previous post)
-
 When writing pattern matching definitions, it's important to cover the whole set of type's constructors. For instance, if we are working with lists:
 
 ```
