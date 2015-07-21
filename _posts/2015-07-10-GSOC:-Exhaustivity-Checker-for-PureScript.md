@@ -107,7 +107,7 @@ data CaseAlternative = CaseAlternative
 So, roughly speaking, `head`'s definition will be desugared as:
 
 ```
-Case [] []
+Case [TypedValue True (Var _0) (TypeApp (TypeConstructor Main.List) (TUnknown 5))] [CaseAlternative {caseAlternativeBinders = [(ConstructorBinder Main.Cons [VarBinder x,NullBinder])], caseAlternativeResult = Right (Var x)}]
 ```
 
 Hence, we can limit our work to just this expressions: we know that all the information we want (up to now) is wrapped inside a `Case` expression.
@@ -196,13 +196,13 @@ As we do not have empty missing sets, how do we complete the full set of uncover
 
 We have two choices to fill those gaps:
 
-- From the current uncovered set:
+**From the current uncovered set**
 
 This is what we are using, and it is a great solution if we want to let the programmer choose the uncovered structure he missed. This could repeat cases, but uncovered at least.
 
 If we take this approach, we will have the missing cases: `{[Zero, _], [Succ _, Succ _]}`
 
-- From the clause
+**From the clause**
 
 This tells the programmer all the missing cases he left uncovered, but respecting the order of the clauses. This is a better solution but requires a bit more of work. We hopefully develop this version after redundancy checking.
 
@@ -214,11 +214,45 @@ You can read the full code (in particular, this last step is written in `missing
 
 ### Exhaustivity for data constructors
 
+For data constructors, we just take each name of each constructor in the datatype, and create the missing cases. Given one constructor from some data declaration, we can know using the environment which are the other constructors.
 
+For instance, if we have:
+
+```
+data Tree a = Empty | Leaf a | Branch (Tree a) (Tree a)
+```
+
+having `Empty` in some clause, we can look up the environment and know that the other constructors are `Leaf` with arity one, and `Branch` with arity two. This help us to generate the missing cases, just deleting the constructor we are covering:
+
+```
+isEmpty :: forall a . Tree a -> Boolean
+isEmpty Empty = True
+isEmpty _ = False
+```
+
+the first clause will generate the uncovered set `{[Leaf _], [Branch _ _]}`.
 
 ### Exhaustivity for records (objects)
 
+Having:
 
+```
+g {bar : Zero} = Zero
+g {foo : Zero, bar : _} = Zero
+```
+
+we obtain:
+
+```
+Warning in value declaration g:
+Warning at /dev/stdin line 3, column 1 - line 4, column 1:
+  Pattern could not be determined to cover all cases.
+  The definition has the following uncovered cases:
+
+    { bar: Main.Succ _, foo: Main.Succ _ }
+```
+
+What we did here is to sort the names of the fields and check for exhaustivity having in mind that could be records which lack some fields.
 
 ### Exhaustivity for other guards
 
@@ -230,7 +264,7 @@ abs x | x < 0 = -x
       | x >= 0 = x
 ```
 
-How do we check if those guards are exhaustive or not? This depends on knowledge of the properties of `<` and `>=`: "in general, the exhaustiveness for pattern matches involving guards is clearly undecidable; for example, it could depend on a deep theorem of arithmetic." [Gadts meet their match](http://research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf).
+How do we check if those guards are exhaustive or not? This depends on knowledge of the properties of `<` and `>=`: *"in general, the exhaustiveness for pattern matches involving guards is clearly undecidable; for example, it could depend on a deep theorem of arithmetic."* [Gadts meet their match](http://research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf).
 
 For that reason, we say a definition with guards is exhaustive if and only if it has an `otherwise` or `true` guard case. 
 
