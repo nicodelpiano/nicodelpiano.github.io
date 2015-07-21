@@ -254,7 +254,7 @@ Warning at /dev/stdin line 3, column 1 - line 4, column 1:
 
 What we did here is to sort the names of the fields and check for exhaustivity, having in mind that could have records which lack some fields. So first we complete those missing fields: a missing field is a wildcard, so it is fully covered when it is not present (for that specific clause). Once we have a full record with all the information we need (all the fields present in the definition), we check for exhaustiveness.
 
-### Exhaustivity for other guards
+### Exhaustivity for guards
 
 Guards are the top problem of exhaustivity checking. Consider this function:
 
