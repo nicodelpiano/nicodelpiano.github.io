@@ -142,14 +142,123 @@ You can read more about the `Binder` ADT in the file `src/Language/PureScript/AS
 
 ### The algorithm we follow
 
+In this section I would like to explain our approach in a very intuitive way:
 
+```
+f p11 p12 ... p1n = e1  -> Clause 1
+
+...
+
+f pm1 pm2 ... pmn = em  -> Clause m
+```
+
+Our algorithm analyses the clauses of a definition one by one from top to bottom, where in each step we have the cases already missing (uncovered), and we generate the new set of missing cases.
+
+We start the approach with `uncovered = { _ }` (one `_` for each argument, `_` stands for a representation of all values), and feeding each clause with this set of uncovered cases we obtain the new set of missing cases. We also describe uncovered cases by a general representation of those values, for example, non-empty lists will be represented as `Cons _ _`.
+
+Example:
+
+let us consider the following datatype representing natural numbers, with a function that adds two naturals:
+
+```
+data Nat = Zero | Succ Nat
+
+add :: Nat -> Nat -> Nat
+add Zero m = m
+add (Succ n) Zero = Succ n
+```
+
+Clearly, `add` is not exhaustive. How do the algorithm realize that?
+
+As we have two arguments, we start with `uncovered = { [_ , _] }` (that is, a list of lists representation for now) and take the first clause of the definition: `add Zero m = m`. We are only interested in the arguments, so that clause will be represented as `[Zero, m]` (with binders would be something alike: `[ConstructorBinder "Zero" [], VarBinder "m"]`).
+
+After that, we start partitioning `uncovered` as follows:
+
+- `Zero` matches against the first `_` (since `uncovered` is a list) and it gives us the new case missing: `[Succ _]` (it is in a list because we might generate more than one missing case).
+
+- `m` matches against the second `_` and, as `VarBinder`s represent all values as wildcards, we have no missing cases: `[]`.
+
+What do we do with `[Succ _]` and `[]`? Taking the `uncovered` set, we complete the missing patterns as follows:
+
+- As we have got `Succ _` over the first argument, we do not match anything "at the right" of that pattern, so we complete the first missing case with: `[Succ _, _]` (we take `_` from the second element of the single uncovered case).
+
+- As we have got `[]` over the second argument, we do nothing by now.
+
+So, after processing the first clause we get: `uncovered = {[Succ _ , _]}`.
+
+Processing the second clause will be as follows:
+
+- From the first argument of the second clause, `Succ n`, we get after matching it to `Zero` the empty set, since `Succ n` stands for all naturals greater than `0`, so the missing set is `[Zero]`. 
+
+- We match the second argument, `Zero`, to `_` and we obtain the missing case: `[Succ _]`.
+
+As we do not have empty missing sets, how do we complete the full set of uncovered cases? That is, we have to complete gaps: `[Zero, gap]` and `[gap, Succ _]`.
+
+We have two choices to fill those gaps:
+
+- From the current uncovered set:
+
+This is what we are using, and it is a great solution if we want to let the programmer choose the uncovered structure he missed. This could repeat cases, but uncovered at least.
+
+If we take this approach, we will have the missing cases: `{[Zero, _], [Succ _, Succ _]}`
+
+- From the clause
+
+This tells the programmer all the missing cases he left uncovered, but respecting the order of the clauses. This is a better solution but requires a bit more of work. We hopefully develop this version after redundancy checking.
+
+If we take this approach, we will have the missing cases: `{[Zero, Zero], [n, Succ _]}`
+
+Hence, depending on what we use to fill those gaps, we will obtain different cases, though uncovered, which is the important issue here.
+
+You can read the full code (in particular, this last step is written in `missingCasesMultiple`) in [Exhaustive.hs](https://github.com/purescript/purescript/blob/master/src/Language/PureScript/Linter/Exhaustive.hs).
 
 ### Exhaustivity for data constructors
 
+
+
 ### Exhaustivity for records (objects)
+
+
+
+### Exhaustivity for other guards
+
+Guards are the top problem of exhaustivity checking. Consider this function:
+
+```
+abs :: Number -> Number
+abs x | x < 0 = -x
+      | x >= 0 = x
+```
+
+How do we check if those guards are exhaustive or not? This depends on knowledge of the properties of `<` and `>=`: "in general, the exhaustiveness for pattern matches involving guards is clearly undecidable; for example, it could depend on a deep theorem of arithmetic." [Gadts meet their match](http://research.microsoft.com/en-us/um/people/simonpj/papers/pattern-matching/gadtpm.pdf).
+
+For that reason, we say a definition with guards is exhaustive if and only if it has an `otherwise` or `true` guard case. 
 
 ### Exhaustivity for other binders
 
+Booleans and literals are also checked for exhaustiveness, but we do something like we did for guards for the latter.
+
+Literals are non-exhaustive by default:
+
+```
+f :: Number -> Number
+f 0 = 0
+```
+
+It is non-exhaustive and the compiler will warn with `{ _ }` missing case. If we add the case:
+
+```
+f :: Number -> Maybe Number
+f 0 = Just 0
+f _ = Nothing
+``` 
+
+we are fully covered. The same goes for all literals except for booleans.
+
 ### Binders we left aside
 
+Arrays are not checked for exhaustivity. The reason is that we might have to add another binder representing them as lists, which is a bit dirty in my opinion. So, we are in favour of leave them for now.
+
 ### Conclusion
+
+
