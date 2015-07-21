@@ -295,4 +295,13 @@ Arrays are not checked for exhaustivity. The reason is that we might have to add
 
 ### Conclusion
 
+To sum up, I guess we have a neat and useful exhaustivity checker. It covers most of the cases a programmer could get, so in my opinion a PureScript user can be sure that he will not have a run-time error caused by non-exhaustive patterns without an alert from the compiler, which it is not a small thing :).
+
+This project was very interesting. I learned a lot of the PureScript's code and I will keep contributing to it!
+
+**Next objective:** get rid of overlapping patterns with redundancy checking!
+
+If something was not clear enough, do not hesitate to leave me a comment! Suggestions, ideas and critics are very welcome.
+
+Thanks for reading!
 
