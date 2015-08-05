@@ -10,7 +10,7 @@ tags: [PureScript, Haskell, Exhaustivity, Checking, Google, GSOC]
 
 **PureScript now has exhaustivity checking as a new warning type!**
 
-This blog post is a brief description of what we have done in the first part of my GSOC. This covers the implementation of the exhaustivity checker for a great language called PureScript (http://purescript.org).
+This blog post is a brief description of what we have done in the first part of my GSOC. This covers the implementation of an exhaustivity checker for a great language called PureScript (http://purescript.org).
 
 ### The issue
 
@@ -295,7 +295,7 @@ Arrays are not checked for exhaustivity. The reason is that we might have to add
 
 ### Conclusion
 
-To sum up, I guess we have a neat and useful exhaustivity checker. It covers most of the cases a programmer could get, so in my opinion a PureScript user can be sure that he will not have a run-time error caused by non-exhaustive patterns without an alert from the compiler, which it is not a small thing :).
+To sum up, I guess we have a neat and useful exhaustivity checker. It covers most of the cases a programmer could get, so in my opinion a PureScript user can be sure that he will not have a run-time error caused by non-exhaustive patterns without an alert from the compiler, which is not a small thing :).
 
 This project was very interesting. I learned a lot of the PureScript's code and I will keep contributing to it!
 
