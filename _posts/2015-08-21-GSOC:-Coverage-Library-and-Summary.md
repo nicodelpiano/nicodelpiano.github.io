@@ -121,7 +121,7 @@ just maps the translation to our pattern match definition of type
 `[([NatBinder], Maybe Guard)]`.
 
 You can see this full example in [coverage
-examples](https://github.com/nicodelpiano/coverage/examples).
+examples](https://github.com/nicodelpiano/coverage/tree/master/examples).
 
 ### GSoC summary
 
